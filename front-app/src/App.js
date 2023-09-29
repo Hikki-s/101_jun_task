@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchDistricts, fetchP2H, fetchProviders, fetchStreets } from "./redux/actions/dataActions";
 
 import {
@@ -29,11 +29,11 @@ function App() {
     const [selectedStreet, setSelectedStreet] = useState("");
 
 
-    const regions = getUniqueRegionNames(streets);
-    const filteredDistrictsNames = filterDistrictsByRegionId(districts, findRegionById(streets, selectedRegion)?.region.id);
-    const filteredStreetsNames = filterStreetsByDistrict(streets, selectedDistrict);
-    const filteredP2HId = filterP2HByStreetId(p2h, findStreetById(selectedStreet, streets));
-    const filteredProviders = filterProvidersByIds(providers, filteredP2HId);
+    const regions = useMemo(() => getUniqueRegionNames(streets), [streets]);
+    const filteredDistrictsNames = useMemo(() => filterDistrictsByRegionId(districts, findRegionById(streets, selectedRegion)?.region.id), [districts, streets, selectedRegion]);
+    const filteredStreetsNames = useMemo(() => filterStreetsByDistrict(streets, selectedDistrict), [streets, selectedDistrict]);
+    const filteredP2HId = useMemo(() => filterP2HByStreetId(p2h, findStreetById(selectedStreet, streets)), [p2h, selectedStreet, streets]);
+    const filteredProviders = useMemo(() => filterProvidersByIds(providers, filteredP2HId), [providers, filteredP2HId]);
 
 
     useEffect(() => {
@@ -41,29 +41,14 @@ function App() {
         dispatch(fetchP2H());
         dispatch(fetchDistricts());
         dispatch(fetchProviders());
-    }, )
+    }, [])
 
     return (
         <div className="App">
             <Box p={3} display={'flex'} flexDirection={'row'} justifyContent={'space-between'}>
-                <MySelect
-                    setSelected={setSelectedRegion}
-                    selected={selectedRegion}
-                    option={regions}
-                    labelName="Регион"
-                />
-                <MySelect
-                    setSelected={setSelectedDistrict}
-                    selected={selectedDistrict}
-                    option={filteredDistrictsNames}
-                    labelName="Район"
-                />
-                <MySelect
-                    setSelected={setSelectedStreet}
-                    selected={selectedStreet}
-                    option={filteredStreetsNames}
-                    labelName="Улица"
-                />
+                <MySelect setSelected={setSelectedRegion} selected={selectedRegion} option={regions} labelName="Регион"/>
+                <MySelect setSelected={setSelectedDistrict} selected={selectedDistrict} option={filteredDistrictsNames} labelName="Район"/>
+                <MySelect setSelected={setSelectedStreet} selected={selectedStreet} option={filteredStreetsNames} labelName="Улица"/>
             </Box>
             <ProviderTable providers={filteredProviders}/>
         </div>
